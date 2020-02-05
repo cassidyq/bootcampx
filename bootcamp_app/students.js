@@ -11,16 +11,20 @@ const pool = new Pool({
   database: process.env.DB_DATABASE
 });
 
+const queryString = `
+SELECT students.id as student_id, students.name as name, cohorts.name as cohort
+FROM students 
+JOIN cohorts ON cohorts.id = cohort_id
+WHERE cohorts.name LIKE $1
+LIMIT $2;
+`;
+
+const cohortName = arguments[0];
+const limit = arguments[1];
+const values = [`%${cohortName}%`, limit];
+
 pool
-  .query(
-    `
-  SELECT students.id as student_id, students.name as name, cohorts.name as cohort
-  FROM students 
-  JOIN cohorts ON cohorts.id = cohort_id
-  WHERE cohorts.name LIKE '%${arguments[0]}%'
-  LIMIT ${arguments[1] || 5};
-  `
-  )
+  .query(queryString, values)
   .then(res => {
     res.rows.forEach(user => {
       console.log(

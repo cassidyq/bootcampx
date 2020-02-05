@@ -11,26 +11,28 @@ const pool = new Pool({
   database: process.env.DB_DATABASE
 });
 
+const queryString = `
+SELECT DISTINCT
+teachers.name AS teacher,
+cohorts.name AS cohort
+FROM
+teachers
+JOIN assistance_requests ON teacher_id = teachers.id
+JOIN students ON students.id = student_id
+JOIN cohorts ON cohorts.id = cohort_id
+WHERE
+cohorts.name = $1
+GROUP BY
+teachers.name,
+cohorts.name
+ORDER BY
+teachers.name;  
+`;
+
+const cohortName = arguments[0];
+
 pool
-  .query(
-    `
-    SELECT DISTINCT
-    teachers.name AS teacher,
-    cohorts.name AS cohort
-  FROM
-    teachers
-    JOIN assistance_requests ON teacher_id = teachers.id
-    JOIN students ON students.id = student_id
-    JOIN cohorts ON cohorts.id = cohort_id
-  WHERE
-    cohorts.name = '${arguments[0]}'
-  GROUP BY
-    teachers.name,
-    cohorts.name
-  ORDER BY
-    teachers.name;  
-  `
-  )
+  .query(queryString, [cohortName])
   .then(res => {
     res.rows.forEach(data => {
       console.log(`${data.cohort}: ${data.teacher}`);
